@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Control de Créditos e Inventario</title>
+  <style>
+    :root {
+      --primary: #1f4e79;
+      --bg: #f4f6f9;
+      --card-bg: #ffffff;
+      --text: #333;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 15px;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .card {
+      background: var(--card-bg);
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    h2, h3 {
+      color: var(--primary);
+      margin-top: 0;
+    }
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 10px;
+      margin-bottom: 4px;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+    button {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      font-weight: bold;
+      margin-top: 15px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #163756;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+      font-size: 13px;
+    }
+    th {
+      background-color: var(--primary);
+      color: white;
+    }
+    .total-box {
+      font-size: 16px;
+      font-weight: bold;
+      color: #d9534f;
+      text-align: right;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>📋 Control de Créditos</h2>
+
+  <!-- 1. Tasa del Dólar -->
+  <div class="card">
+    <label for="tasaDolar">💵 Tasa del Dólar del Día (Bs):</label>
+    <input type="number" id="tasaDolar" placeholder="Ej: 36.50" step="0.01" value="36.50">
+  </div>
+
+  <!-- 2. Registro del Cliente -->
+  <div class="card">
+    <h3>👤 Datos del Cliente</h3>
+    <label for="nombreCliente">Nombre del Cliente:</label>
+    <input type="text" id="nombreCliente" placeholder="Ej: Juan Pérez">
+    
+    <label for="cedulaCliente">Teléfono o Cédula:</label>
+    <input type="text" id="cedulaCliente" placeholder="Ej: 0414-1234567">
+  </div>
+
+  <!-- 3. Detalle del Crédito / Productos -->
+  <div class="card">
+    <h3>🛒 Agregar Productos</h3>
+
+    <!-- Categoría -->
+    <label for="categoria">Selecciona el Rubro:</label>
+    <select id="categoria" onchange="actualizarListaProductos()">
+      <option value="">-- Selecciona Rubro --</option>
+      <option value="viveres">Víveres y Abarrotes</option>
+      <option value="bebidas">Bebidas y Gaseosas</option>
+      <option value="snacks">Snacks y Frituras</option>
+      <option value="lacteos">Lácteos y Refrigerados</option>
+      <option value="confiteria">Confitería y Golosinas</option>
+    </select>
+
+    <!-- Producto desplegable -->
+    <label for="producto">Selecciona el Alimento:</label>
+    <select id="producto">
+      <option value="">-- Primero selecciona un rubro --</option>
+    </select>
+
+    <label for="precioUSD">Precio ($):</label>
+    <input type="number" id="precioUSD" placeholder="0.00" step="0.01">
+
+    <label for="cantidad">Cantidad:</label>
+    <input type="number" id="cantidad" value="1" min="1">
+
+    <button type="button" onclick="agregarProducto()">➕ Agregar Producto al Crédito</button>
+  </div>
+
+  <!-- 4. Resumen del Crédito Actual -->
+  <div class="card">
+    <h3>📝 Detalle de la Cuenta</h3>
+    <table id="tablaCredito">
+      <thead>
+        <tr>
+          <th>Rubro</th>
+          <th>Producto</th>
+          <th>Cant.</th>
+          <th>Subtotal ($)</th>
+        </tr>
+      </thead>
+      <tbody id="cuerpoTabla">
+        <!-- Se llena dinámicamente -->
+      </tbody>
+    </table>
+
+    <div class="total-box">
+      Total Crédito: <span id="totalUSD">$0.00</span> | <span id="totalBS">Bs 0.00</span>
+    </div>
+
+    <button type="button" onclick="guardarCreditoTotal()" style="background-color: #28a745;">💾 Guardar Crédito del Cliente</button>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
