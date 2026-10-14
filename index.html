@@ -90,7 +90,7 @@
   <!-- 1. Tasa del Dólar -->
   <div class="card">
     <label for="tasaDolar">💵 Tasa del Dólar del Día (Bs):</label>
-    <input type="number" id="tasaDolar" placeholder="Ej: 36.50" step="0.01" value="36.50">
+    <input type="number" id="tasaDolar" placeholder="Ej: 36.50" step="0.01" value="36.50" oninput="actualizarTabla()">
   </div>
 
   <!-- 2. Registro del Cliente -->
@@ -107,15 +107,10 @@
   <div class="card">
     <h3>🛒 Agregar Productos</h3>
 
-    <!-- Categoría -->
+    <!-- Categoría / Rubro -->
     <label for="categoria">Selecciona el Rubro:</label>
     <select id="categoria" onchange="actualizarListaProductos()">
       <option value="">-- Selecciona Rubro --</option>
-      <option value="viveres">Víveres y Abarrotes</option>
-      <option value="bebidas">Bebidas y Gaseosas</option>
-      <option value="snacks">Snacks y Frituras</option>
-      <option value="lacteos">Lácteos y Refrigerados</option>
-      <option value="confiteria">Confitería y Golosinas</option>
     </select>
 
     <!-- Producto desplegable -->
@@ -124,7 +119,7 @@
       <option value="">-- Primero selecciona un rubro --</option>
     </select>
 
-    <label for="precioUSD">Precio ($):</label>
+    <label for="precioUSD">Precio Unitario ($):</label>
     <input type="number" id="precioUSD" placeholder="0.00" step="0.01">
 
     <label for="cantidad">Cantidad:</label>
@@ -139,10 +134,10 @@
     <table id="tablaCredito">
       <thead>
         <tr>
-          <th>Rubro</th>
           <th>Producto</th>
           <th>Cant.</th>
           <th>Subtotal ($)</th>
+          <th>Acción</th>
         </tr>
       </thead>
       <tbody id="cuerpoTabla">
