@@ -70,6 +70,16 @@
     .btn-danger:hover {
       background-color: #c9302c;
     }
+    .btn-custom {
+      background-color: #f0ad4e;
+      color: white;
+      font-size: 12px;
+      padding: 6px;
+      margin-top: 6px;
+    }
+    .btn-custom:hover {
+      background-color: #ec971f;
+    }
     table {
       width: 100%;
       border-collapse: collapse;
@@ -101,6 +111,13 @@
     }
     .oculto {
       display: none;
+    }
+    .box-nuevo {
+      background: #fff8e7;
+      border: 1px dashed #f0ad4e;
+      padding: 10px;
+      border-radius: 6px;
+      margin-top: 10px;
     }
   </style>
 </head>
@@ -141,12 +158,30 @@
       <select id="categoria" onchange="actualizarListaProductos()">
         <option value="">-- Selecciona un Rubro --</option>
       </select>
+      <button type="button" class="btn-custom" onclick="mostrarCrearRubro()">➕ ¿No está el rubro? Crear uno nuevo</button>
+
+      <!-- Panel oculto para nuevo rubro -->
+      <div id="boxNuevoRubro" class="box-nuevo oculto">
+        <label for="nuevoRubroNombre">Nombre del Nuevo Rubro:</label>
+        <input type="text" id="nuevoRubroNombre" placeholder="Ej: 11. Charcutería Fina">
+        <button type="button" onclick="guardarNuevoRubro()">Guardar Nuevo Rubro</button>
+      </div>
 
       <!-- Alimento -->
       <label for="producto">Selecciona el Alimento:</label>
       <select id="producto">
         <option value="">-- Primero selecciona un rubro --</option>
       </select>
+      <button type="button" class="btn-custom" onclick="mostrarCrearProducto()">➕ ¿No está el alimento? Agregar a este rubro</button>
+
+      <!-- Panel oculto para nuevo producto -->
+      <div id="boxNuevoProducto" class="box-nuevo oculto">
+        <label for="nuevoProductoNombre">Nombre del Nuevo Alimento:</label>
+        <input type="text" id="nuevoProductoNombre" placeholder="Ej: Jamón de Espalda 1kg">
+        <label for="nuevoProductoPrecio">Precio Sugerido ($):</label>
+        <input type="number" id="nuevoProductoPrecio" placeholder="0.00" step="0.01">
+        <button type="button" onclick="guardarNuevoProducto()">Guardar Producto en el Rubro</button>
+      </div>
 
       <label for="precioUSD">Precio Unitario ($):</label>
       <input type="number" id="precioUSD" placeholder="0.00" step="0.01">
@@ -199,8 +234,8 @@
 </div>
 
 <script>
-  // Catálogo completo integrado
-  const catalogo = {
+  // Catálogo inicial base
+  const catalogoBase = {
     "1. Cereales, Galletas y Snacks Dulces": [
       { nombre: "Flips (Dulce de Leche, Chocolate)", precio: 1.50 },
       { nombre: "Fruty Aros (Maizoritos)", precio: 1.20 },
@@ -332,10 +367,29 @@
     ]
   };
 
+  // Cargar catálogo modificado del localStorage o usar el base
+  function obtenerCatalogo() {
+    let guardado = localStorage.getItem("catalogo_personalizado");
+    if (guardado) {
+      return JSON.parse(guardado);
+    }
+    return catalogoBase;
+  }
+
+  function guardarCatalogo(catalogoActualizado) {
+    localStorage.setItem("catalogo_personalizado", JSON.stringify(catalogoActualizado));
+  }
+
   let productosAgregados = [];
 
   window.onload = function() {
+    cargarRubrosEnSelect();
+  };
+
+  function cargarRubrosEnSelect() {
     const comboRubro = document.getElementById("categoria");
+    let catalogo = obtenerCatalogo();
+    
     comboRubro.innerHTML = '<option value="">-- Selecciona un Rubro --</option>';
     
     Object.keys(catalogo).forEach(rubro => {
@@ -344,12 +398,13 @@
       option.textContent = rubro;
       comboRubro.appendChild(option);
     });
-  };
+  }
 
   function actualizarListaProductos() {
     const rubroSeleccionado = document.getElementById("categoria").value;
     const comboProducto = document.getElementById("producto");
     const inputPrecio = document.getElementById("precioUSD");
+    let catalogo = obtenerCatalogo();
 
     comboProducto.innerHTML = '<option value="">-- Selecciona un Alimento --</option>';
     inputPrecio.value = "";
@@ -372,6 +427,73 @@
       document.getElementById("precioUSD").value = precioSugerido;
     }
   });
+
+  // Mostrar u ocultar cajas para agregar Rubro / Producto nuevo
+  function mostrarCrearRubro() {
+    const box = document.getElementById("boxNuevoRubro");
+    box.classList.toggle("oculto");
+  }
+
+  function mostrarCrearProducto() {
+    const rubroSeleccionado = document.getElementById("categoria").value;
+    if (!rubroSeleccionado) {
+      alert("Por favor primero selecciona un rubro al cual vas a agregar el nuevo alimento.");
+      return;
+    }
+    const box = document.getElementById("boxNuevoProducto");
+    box.classList.toggle("oculto");
+  }
+
+  function guardarNuevoRubro() {
+    const nombreRubro = document.getElementById("nuevoRubroNombre").value.trim();
+    if (!nombreRubro) {
+      alert("Ingresa un nombre para el nuevo rubro.");
+      return;
+    }
+
+    let catalogo = obtenerCatalogo();
+    if (!catalogo[nombreRubro]) {
+      catalogo[nombreRubro] = [];
+      guardarCatalogo(catalogo);
+      cargarRubrosEnSelect();
+      document.getElementById("categoria").value = nombreRubro;
+      actualizarListaProductos();
+      document.getElementById("nuevoRubroNombre").value = "";
+      mostrarCrearRubro();
+      alert(`✅ Rubro "${nombreRubro}" creado con éxito.`);
+    } else {
+      alert("Ese rubro ya existe.");
+    }
+  }
+
+  function guardarNuevoProducto() {
+    const rubro = document.getElementById("categoria").value;
+    const nombreProd = document.getElementById("nuevoProductoNombre").value.trim();
+    const precioProd = parseFloat(document.getElementById("nuevoProductoPrecio").value);
+
+    if (!rubro) {
+      alert("Selecciona primero el rubro.");
+      return;
+    }
+    if (!nombreProd || isNaN(precioProd) || precioProd <= 0) {
+      alert("Ingresa un nombre de alimento y un precio sugerido válido.");
+      return;
+    }
+
+    let catalogo = obtenerCatalogo();
+    catalogo[rubro].push({ nombre: nombreProd, precio: precioProd });
+    guardarCatalogo(catalogo);
+
+    actualizarListaProductos();
+    document.getElementById("producto").value = nombreProd;
+    document.getElementById("precioUSD").value = precioProd;
+
+    document.getElementById("nuevoProductoNombre").value = "";
+    document.getElementById("nuevoProductoPrecio").value = "";
+    mostrarCrearProducto();
+
+    alert(`✅ Alimento "${nombreProd}" agregado con éxito al rubro "${rubro}".`);
+  }
 
   function agregarProducto() {
     const rubro = document.getElementById("categoria").value;
@@ -470,7 +592,6 @@
     actualizarTabla();
   }
 
-  // Funciones para alternar vistas y mostrar historial
   function alternarVista() {
     const vistaReg = document.getElementById("vistaRegistro");
     const vistaHist = document.getElementById("vistaHistorial");
@@ -501,7 +622,6 @@
       return;
     }
 
-    // Filtrar por nombre si se escribe en el buscador
     let historialFiltrado = historial.filter(item => 
       item.cliente.toLowerCase().includes(filtro.toLowerCase())
     );
