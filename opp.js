@@ -235,4 +235,52 @@ function actualizarTabla() {
   const totalBS = totalUSD * tasaDolar;
 
   document.getElementById("totalUSD").textContent = `$${totalUSD.toFixed(2)}`;
-  document.getElementById("totalBS").textContent
+  document.getElementById("totalBS").textContent = `Bs ${totalBS.toFixed(2)}`;
+}
+
+// Eliminar un producto individual de la lista
+function eliminarItem(index) {
+  productosAgregados.splice(index, 1);
+  actualizarTabla();
+}
+
+// Guardar crédito del cliente
+function guardarCreditoTotal() {
+  const cliente = document.getElementById("nombreCliente").value;
+  const telefono = document.getElementById("cedulaCliente").value;
+  const tasa = document.getElementById("tasaDolar").value;
+
+  if (!cliente) {
+    alert("Por favor ingresa el nombre del cliente.");
+    return;
+  }
+
+  if (productosAgregados.length === 0) {
+    alert("Agrega al menos un producto al crédito.");
+    return;
+  }
+
+  let totalUSD = productosAgregados.reduce((sum, item) => sum + item.subtotal, 0);
+  let totalBS = totalUSD * tasa;
+
+  let registroCredito = {
+    fecha: new Date().toLocaleString(),
+    cliente: cliente,
+    telefono: telefono,
+    tasaDolar: tasa,
+    productos: productosAgregados,
+    totalUSD: totalUSD,
+    totalBS: totalBS
+  };
+
+  let historial = JSON.parse(localStorage.getItem("historial_creditos")) || [];
+  historial.push(registroCredito);
+  localStorage.setItem("historial_creditos", JSON.stringify(historial));
+
+  alert(`✅ ¡Crédito guardado con éxito para ${cliente}!\nTotal: $${totalUSD.toFixed(2)} (Bs ${totalBS.toFixed(2)})`);
+  
+  document.getElementById("nombreCliente").value = "";
+  document.getElementById("cedulaCliente").value = "";
+  productosAgregados = [];
+  actualizarTabla();
+}
