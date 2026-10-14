@@ -58,6 +58,18 @@
     button:hover {
       background-color: #163756;
     }
+    .btn-secondary {
+      background-color: #5bc0de;
+    }
+    .btn-secondary:hover {
+      background-color: #31b0d5;
+    }
+    .btn-danger {
+      background-color: #d9534f;
+    }
+    .btn-danger:hover {
+      background-color: #c9302c;
+    }
     table {
       width: 100%;
       border-collapse: collapse;
@@ -80,81 +92,114 @@
       text-align: right;
       margin-top: 10px;
     }
+    .credito-item {
+      background: #f9f9f9;
+      border-left: 4px solid var(--primary);
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 4px;
+    }
+    .oculto {
+      display: none;
+    }
   </style>
 </head>
 <body>
 
 <div class="container">
-  <h2>📋 Control de Créditos e Inventario</h2>
+  <h2>📋 Control de Créditos TLA</h2>
 
-  <!-- 1. Tasa del Dólar -->
-  <div class="card">
-    <label for="tasaDolar">💵 Tasa del Dólar del Día (Bs):</label>
-    <input type="number" id="tasaDolar" placeholder="Ej: 36.50" step="0.01" value="36.50" oninput="actualizarTabla()">
+  <!-- Botón para alternar vistas -->
+  <div style="margin-bottom: 15px; display: flex; gap: 10px;">
+    <button type="button" id="btnCambiarVista" class="btn-secondary" onclick="alternarVista()">👥 Ver Lista de Créditos por Cliente</button>
   </div>
 
-  <!-- 2. Registro del Cliente -->
-  <div class="card">
-    <h3>👤 Datos del Cliente</h3>
-    <label for="nombreCliente">Nombre del Cliente:</label>
-    <input type="text" id="nombreCliente" placeholder="Ej: Juan Pérez">
-    
-    <label for="cedulaCliente">Teléfono o Cédula:</label>
-    <input type="text" id="cedulaCliente" placeholder="Ej: 0414-1234567">
-  </div>
-
-  <!-- 3. Detalle del Crédito / Productos -->
-  <div class="card">
-    <h3>🛒 Agregar Productos</h3>
-
-    <!-- Rubro -->
-    <label for="categoria">Selecciona el Rubro:</label>
-    <select id="categoria" onchange="actualizarListaProductos()">
-      <option value="">-- Selecciona un Rubro --</option>
-    </select>
-
-    <!-- Alimento -->
-    <label for="producto">Selecciona el Alimento:</label>
-    <select id="producto">
-      <option value="">-- Primero selecciona un rubro --</option>
-    </select>
-
-    <label for="precioUSD">Precio Unitario ($):</label>
-    <input type="number" id="precioUSD" placeholder="0.00" step="0.01">
-
-    <label for="cantidad">Cantidad:</label>
-    <input type="number" id="cantidad" value="1" min="1">
-
-    <button type="button" onclick="agregarProducto()">➕ Agregar Producto al Crédito</button>
-  </div>
-
-  <!-- 4. Resumen del Crédito Actual -->
-  <div class="card">
-    <h3>📝 Detalle de la Cuenta</h3>
-    <table id="tablaCredito">
-      <thead>
-        <tr>
-          <th>Producto</th>
-          <th>Cant.</th>
-          <th>Subtotal ($)</th>
-          <th>Acción</th>
-        </tr>
-      </thead>
-      <tbody id="cuerpoTabla">
-        <!-- Se llena dinámicamente -->
-      </tbody>
-    </table>
-
-    <div class="total-box">
-      Total Crédito: <span id="totalUSD">$0.00</span> | <span id="totalBS">Bs 0.00</span>
+  <!-- VISTA 1: REGISTRAR CRÉDITO -->
+  <div id="vistaRegistro">
+    <!-- 1. Tasa del Dólar -->
+    <div class="card">
+      <label for="tasaDolar">💵 Tasa del Dólar del Día (Bs):</label>
+      <input type="number" id="tasaDolar" placeholder="Ej: 36.50" step="0.01" value="36.50" oninput="actualizarTabla()">
     </div>
 
-    <button type="button" onclick="guardarCreditoTotal()" style="background-color: #28a745;">💾 Guardar Crédito del Cliente</button>
+    <!-- 2. Registro del Cliente -->
+    <div class="card">
+      <h3>👤 Datos del Cliente</h3>
+      <label for="nombreCliente">Nombre del Cliente:</label>
+      <input type="text" id="nombreCliente" placeholder="Ej: Juan Pérez">
+      
+      <label for="cedulaCliente">Teléfono o Cédula:</label>
+      <input type="text" id="cedulaCliente" placeholder="Ej: 0414-1234567">
+    </div>
+
+    <!-- 3. Detalle del Crédito / Productos -->
+    <div class="card">
+      <h3>🛒 Agregar Productos</h3>
+
+      <!-- Rubro -->
+      <label for="categoria">Selecciona el Rubro:</label>
+      <select id="categoria" onchange="actualizarListaProductos()">
+        <option value="">-- Selecciona un Rubro --</option>
+      </select>
+
+      <!-- Alimento -->
+      <label for="producto">Selecciona el Alimento:</label>
+      <select id="producto">
+        <option value="">-- Primero selecciona un rubro --</option>
+      </select>
+
+      <label for="precioUSD">Precio Unitario ($):</label>
+      <input type="number" id="precioUSD" placeholder="0.00" step="0.01">
+
+      <label for="cantidad">Cantidad:</label>
+      <input type="number" id="cantidad" value="1" min="1">
+
+      <button type="button" onclick="agregarProducto()">➕ Agregar Producto al Crédito</button>
+    </div>
+
+    <!-- 4. Resumen del Crédito Actual -->
+    <div class="card">
+      <h3>📝 Detalle de la Cuenta</h3>
+      <table id="tablaCredito">
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>Cant.</th>
+            <th>Subtotal ($)</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
+        <tbody id="cuerpoTabla">
+          <!-- Se llena dinámicamente -->
+        </tbody>
+      </table>
+
+      <div class="total-box">
+        Total Crédito: <span id="totalUSD">$0.00</span> | <span id="totalBS">Bs 0.00</span>
+      </div>
+
+      <button type="button" onclick="guardarCreditoTotal()" style="background-color: #28a745;">💾 Guardar Crédito del Cliente</button>
+    </div>
   </div>
+
+  <!-- VISTA 2: LISTA DE CRÉDITOS POR CLIENTE -->
+  <div id="vistaHistorial" class="oculto">
+    <div class="card">
+      <h3>👥 Historial de Créditos por Cliente</h3>
+      <input type="text" id="buscadorCliente" placeholder="🔍 Buscar cliente por nombre..." oninput="filtrarHistorial()" style="margin-bottom: 12px;">
+      
+      <div id="contenedorHistorial">
+        <!-- Aquí se cargan los créditos guardados -->
+      </div>
+
+      <button type="button" class="btn-danger" onclick="borrarTodoHistorial()">🗑️ Borrar Todo el Historial</button>
+    </div>
+  </div>
+
 </div>
 
 <script>
-  // Base de datos integrada con tus rubros y productos reales
+  // Catálogo completo integrado
   const catalogo = {
     "1. Cereales, Galletas y Snacks Dulces": [
       { nombre: "Flips (Dulce de Leche, Chocolate)", precio: 1.50 },
@@ -289,7 +334,6 @@
 
   let productosAgregados = [];
 
-  // Cargar rubros al iniciar la página
   window.onload = function() {
     const comboRubro = document.getElementById("categoria");
     comboRubro.innerHTML = '<option value="">-- Selecciona un Rubro --</option>';
@@ -302,7 +346,6 @@
     });
   };
 
-  // Actualizar alimentos según el rubro seleccionado
   function actualizarListaProductos() {
     const rubroSeleccionado = document.getElementById("categoria").value;
     const comboProducto = document.getElementById("producto");
@@ -322,7 +365,6 @@
     }
   }
 
-  // Colocar precio automático al elegir un alimento
   document.getElementById("producto").addEventListener("change", function() {
     const selectedOption = this.options[this.selectedIndex];
     const precioSugerido = selectedOption.getAttribute("data-precio");
@@ -331,7 +373,6 @@
     }
   });
 
-  // Agregar producto a la tabla de crédito
   function agregarProducto() {
     const rubro = document.getElementById("categoria").value;
     const producto = document.getElementById("producto").value;
@@ -358,15 +399,12 @@
     document.getElementById("cantidad").value = "1";
   }
 
-  // Actualizar la tabla visual y totales
   function actualizarTabla() {
     const cuerpoTabla = document.getElementById("cuerpoTabla");
     const tasaDolar = parseFloat(document.getElementById("tasaDolar").value) || 0;
     
     cuerpoTabla.innerHTML = "";
     let totalUSD = 0;
-
-    productosAgregados.push = productosAgregados.forEach ? productosAgregados : productosAgregados;
 
     productosAgregados.forEach((item, index) => {
       totalUSD += item.subtotal;
@@ -387,17 +425,15 @@
     document.getElementById("totalBS").textContent = `Bs ${totalBS.toFixed(2)}`;
   }
 
-  // Eliminar producto de la lista
   function eliminarItem(index) {
     productosAgregados.splice(index, 1);
     actualizarTabla();
   }
 
-  // Guardar crédito en el navegador
   function guardarCreditoTotal() {
     const cliente = document.getElementById("nombreCliente").value;
     const telefono = document.getElementById("cedulaCliente").value;
-    const tasa = document.getElementById("tasaDolar").value;
+    const tasa = parseFloat(document.getElementById("tasaDolar").value) || 0;
 
     if (!cliente) {
       alert("Por favor ingresa el nombre del cliente.");
@@ -417,7 +453,7 @@
       cliente: cliente,
       telefono: telefono,
       tasaDolar: tasa,
-      productos: productosAgregados,
+      productos: [...productosAgregados],
       totalUSD: totalUSD,
       totalBS: totalBS
     };
@@ -432,6 +468,89 @@
     document.getElementById("cedulaCliente").value = "";
     productosAgregados = [];
     actualizarTabla();
+  }
+
+  // Funciones para alternar vistas y mostrar historial
+  function alternarVista() {
+    const vistaReg = document.getElementById("vistaRegistro");
+    const vistaHist = document.getElementById("vistaHistorial");
+    const btn = document.getElementById("btnCambiarVista");
+
+    if (vistaReg.classList.contains("oculto")) {
+      vistaReg.classList.remove("oculto");
+      vistaHist.classList.add("oculto");
+      btn.textContent = "👥 Ver Lista de Créditos por Cliente";
+      btn.className = "btn-secondary";
+    } else {
+      vistaReg.classList.add("oculto");
+      vistaHist.classList.remove("oculto");
+      btn.textContent = "➕ Volver a Registrar Crédito";
+      btn.className = "";
+      cargarHistorial();
+    }
+  }
+
+  function cargarHistorial(filtro = "") {
+    const contenedor = document.getElementById("contenedorHistorial");
+    let historial = JSON.parse(localStorage.getItem("historial_creditos")) || [];
+
+    contenedor.innerHTML = "";
+
+    if (historial.length === 0) {
+      contenedor.innerHTML = "<p>No hay créditos guardados todavía.</p>";
+      return;
+    }
+
+    // Filtrar por nombre si se escribe en el buscador
+    let historialFiltrado = historial.filter(item => 
+      item.cliente.toLowerCase().includes(filtro.toLowerCase())
+    );
+
+    if (historialFiltrado.length === 0) {
+      contenedor.innerHTML = "<p>No se encontraron clientes con ese nombre.</p>";
+      return;
+    }
+
+    historialFiltrado.forEach((credito, index) => {
+      let listaProdHtml = "";
+      credito.productos.forEach(p => {
+        listaProdHtml += `<li>${p.cantidad}x ${p.producto} ($${p.subtotal.toFixed(2)})</li>`;
+      });
+
+      let itemDiv = document.createElement("div");
+      itemDiv.className = "credito-item";
+      itemDiv.innerHTML = `
+        <strong>👤 Cliente: ${credito.cliente}</strong> (${credito.telefono || 'Sin teléfono'})<br>
+        <small>📅 Fecha: ${credito.fecha} | Tasa: Bs ${credito.tasaDolar}</small>
+        <ul>${listaProdHtml}</ul>
+        <div style="font-weight:bold; color:#d9534f; text-align:right;">
+          Total: $${credito.totalUSD.toFixed(2)} | Bs ${credito.totalBS.toFixed(2)}
+        </div>
+        <button type="button" class="btn-danger" onclick="eliminarCredito(${index})" style="padding:4px 8px; margin-top:5px; font-size:11px; width:auto;">Eliminar este crédito</button>
+      `;
+      contenedor.appendChild(itemDiv);
+    });
+  }
+
+  function filtrarHistorial() {
+    const texto = document.getElementById("buscadorCliente").value;
+    cargarHistorial(texto);
+  }
+
+  function eliminarCredito(index) {
+    if (confirm("¿Estás seguro de eliminar este registro de crédito?")) {
+      let historial = JSON.parse(localStorage.getItem("historial_creditos")) || [];
+      historial.splice(index, 1);
+      localStorage.setItem("historial_creditos", JSON.stringify(historial));
+      cargarHistorial();
+    }
+  }
+
+  function borrarTodoHistorial() {
+    if (confirm("¿Estás seguro de borrar TODOS los créditos guardados? Esta acción no se puede deshacer.")) {
+      localStorage.removeItem("historial_creditos");
+      cargarHistorial();
+    }
   }
 </script>
 
