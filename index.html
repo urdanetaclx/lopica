@@ -427,7 +427,6 @@
     }
   });
 
-  // NUEVA FUNCIÓN: Actualiza automáticamente el precio en el localStorage si el usuario lo modifica manualmente
   function actualizarPrecioEnCatalogo() {
     const rubro = document.getElementById("categoria").value;
     const nombreProducto = document.getElementById("producto").value;
@@ -442,7 +441,6 @@
         productoObj.precio = nuevoPrecio;
         guardarCatalogo(catalogo);
         
-        // Actualizar también el data-precio de la opción en el select
         const comboProducto = document.getElementById("producto");
         for (let i = 0; i < comboProducto.options.length; i++) {
           if (comboProducto.options[i].value === nombreProducto) {
@@ -577,7 +575,7 @@
     actualizarTabla();
   }
 
-  // MODIFICADO: Agrupa o acumula la cuenta si el cliente ya existe
+  // MODIFICADO: Agrega una nueva compra al historial del cliente guardando su fecha respectiva y sumando al total global
   function guardarCreditoTotal() {
     const clienteInput = document.getElementById("nombreCliente").value.trim();
     const telefono = document.getElementById("cedulaCliente").value.trim();
@@ -594,46 +592,46 @@
     }
 
     let historial = JSON.parse(localStorage.getItem("historial_creditos")) || [];
-
-    // Buscar si ya existe un crédito registrado con el mismo nombre de cliente (ignorando mayúsculas/minúsculas)
     let clienteExistente = historial.find(item => item.cliente.toLowerCase() === clienteInput.toLowerCase());
 
+    let nuevaCompra = {
+      fecha: new Date().toLocaleString(),
+      tasaDolar: tasa,
+      productos: [...productosAgregados]
+    };
+
     if (clienteExistente) {
-      // Si ya existe, combinamos los nuevos productos con los que ya tenía
-      productosAgregados.forEach(nuevoProd => {
-        let prodExistente = clienteExistente.productos.find(p => p.producto === nuevoProd.producto);
-        if (prodExistente) {
-          prodExistente.cantidad += nuevoProd.cantidad;
-          prodExistente.subtotal += nuevoProd.subtotal;
-        } else {
-          clienteExistente.productos.push({ ...nuevoProd });
-        }
+      clienteExistente.compras.push(nuevaCompra);
+      if (telefono) clienteExistente.telefono = telefono;
+
+      // Recalcular el total global sumando todas las compras del cliente
+      let totalUSDGlobal = 0;
+      clienteExistente.compras.forEach(compra => {
+        compra.productos.forEach(p => {
+          totalUSDGlobal += p.subtotal;
+        });
       });
+      clienteExistente.totalUSD = totalUSDGlobal;
+      clienteExistente.totalBS = totalUSDGlobal * tasa;
 
-      // Recalcular los totales generales del cliente
-      clienteExistente.totalUSD = clienteExistente.productos.reduce((sum, p) => sum + p.subtotal, 0);
-      clienteExistente.totalBS = clienteExistente.totalUSD * tasa;
-      clienteExistente.fecha = new Date().toLocaleString(); // Actualizar fecha de última compra
-      if (telefono) clienteExistente.telefono = telefono; // Actualizar teléfono si se ingresó uno nuevo
-
-      alert(`✅ ¡Crédito actualizado para ${clienteExistente.cliente}!\nNuevo Total: $${clienteExistente.totalUSD.toFixed(2)} (Bs ${clienteExistente.totalBS.toFixed(2)})`);
+      alert(`✅ ¡Crédito actualizado para ${clienteExistente.cliente}!\nNuevo Total Global: $${totalUSDGlobal.toFixed(2)} (Bs ${clienteExistente.totalBS.toFixed(2)})`);
     } else {
-      // Si es un cliente nuevo, se crea el registro completo
-      let totalUSD = productosAgregados.reduce((sum, item) => sum + item.subtotal, 0);
-      let totalBS = totalUSD * tasa;
+      let totalUSDGlobal = 0;
+      productosAgregados.forEach(p => {
+        totalUSDGlobal += p.subtotal;
+      });
+      let totalBSGlobal = totalUSDGlobal * tasa;
 
-      let registroCredito = {
-        fecha: new Date().toLocaleString(),
+      let registroCliente = {
         cliente: clienteInput,
         telefono: telefono,
-        tasaDolar: tasa,
-        productos: [...productosAgregados],
-        totalUSD: totalUSD,
-        totalBS: totalBS
+        compras: [nuevaCompra],
+        totalUSD: totalUSDGlobal,
+        totalBS: totalBSGlobal
       };
 
-      historial.push(registroCredito);
-      alert(`✅ ¡Crédito guardado con éxito para ${clienteInput}!\nTotal: $${totalUSD.toFixed(2)} (Bs ${totalBS.toFixed(2)})`);
+      historial.push(registroCliente);
+      alert(`✅ ¡Crédito guardado con éxito para ${clienteInput}!\nTotal: $${totalUSDGlobal.toFixed(2)} (Bs ${totalBSGlobal.toFixed(2)})`);
     }
 
     localStorage.setItem("historial_creditos", JSON.stringify(historial));
@@ -683,22 +681,33 @@
       return;
     }
 
-    historialFiltrado.forEach((credito, index) => {
-      let listaProdHtml = "";
-      credito.productos.forEach(p => {
-        listaProdHtml += `<li>${p.cantidad}x ${p.producto} ($${p.subtotal.toFixed(2)})</li>`;
+    historialFiltrado.forEach((clienteObj, index) => {
+      let comprasHtml = "";
+      
+      // Desglosar cada compra por separado con su respectiva fecha
+      clienteObj.compras.forEach((compra) => {
+        let listaProdHtml = "";
+        compra.productos.forEach(p => {
+          listaProdHtml += `<li>${p.cantidad}x ${p.producto} ($${p.subtotal.toFixed(2)})</li>`;
+        });
+
+        comprasHtml += `
+          <div style="margin-top: 8px; border-top: 1px dashed #ccc; padding-top: 6px;">
+            <small>📅 <strong>Fecha de compra:</strong> ${compra.fecha} (Tasa: Bs ${compra.tasaDolar})</small>
+            <ul>${listaProdHtml}</ul>
+          </div>
+        `;
       });
 
       let itemDiv = document.createElement("div");
       itemDiv.className = "credito-item";
       itemDiv.innerHTML = `
-        <strong>👤 Cliente: ${credito.cliente}</strong> (${credito.telefono || 'Sin teléfono'})<br>
-        <small>📅 Última actualización: ${credito.fecha} | Tasa: Bs ${credito.tasaDolar}</small>
-        <ul>${listaProdHtml}</ul>
-        <div style="font-weight:bold; color:#d9534f; text-align:right;">
-          Total: $${credito.totalUSD.toFixed(2)} | Bs ${credito.totalBS.toFixed(2)}
+        <strong>👤 Cliente: ${clienteObj.cliente}</strong> (${clienteObj.telefono || 'Sin teléfono'})
+        ${comprasHtml}
+        <div style="font-weight:bold; color:#d9534f; text-align:right; margin-top: 10px; font-size: 15px;">
+          Total Global Acumulado: $${clienteObj.totalUSD.toFixed(2)} | Bs ${clienteObj.totalBS.toFixed(2)}
         </div>
-        <button type="button" class="btn-danger" onclick="eliminarCredito(${index})" style="padding:4px 8px; margin-top:5px; font-size:11px; width:auto;">Eliminar este crédito</button>
+        <button type="button" class="btn-danger" onclick="eliminarCredito(${index})" style="padding:4px 8px; margin-top:8px; font-size:11px; width:auto;">Eliminar todo el crédito del cliente</button>
       `;
       contenedor.appendChild(itemDiv);
     });
@@ -710,7 +719,7 @@
   }
 
   function eliminarCredito(index) {
-    if (confirm("¿Estás seguro de eliminar este registro de crédito?")) {
+    if (confirm("¿Estás seguro de eliminar todo el registro de este cliente?")) {
       let historial = JSON.parse(localStorage.getItem("historial_creditos")) || [];
       historial.splice(index, 1);
       localStorage.setItem("historial_creditos", JSON.stringify(historial));
