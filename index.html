@@ -183,8 +183,8 @@
         <button type="button" onclick="guardarNuevoProducto()">Guardar Producto en el Rubro</button>
       </div>
 
-      <label for="precioUSD">Precio Unitario ($):</label>
-      <input type="number" id="precioUSD" placeholder="0.00" step="0.01">
+      <label for="precioUSD">Precio Unitario ($) [Puedes modificarlo y se actualizará en el catálogo]:</label>
+      <input type="number" id="precioUSD" placeholder="0.00" step="0.01" oninput="actualizarPrecioEnCatalogo()">
 
       <label for="cantidad">Cantidad:</label>
       <input type="number" id="cantidad" value="1" min="1">
@@ -367,7 +367,6 @@
     ]
   };
 
-  // Cargar catálogo modificado del localStorage o usar el base
   function obtenerCatalogo() {
     let guardado = localStorage.getItem("catalogo_personalizado");
     if (guardado) {
@@ -428,7 +427,33 @@
     }
   });
 
-  // Mostrar u ocultar cajas para agregar Rubro / Producto nuevo
+  // NUEVA FUNCIÓN: Actualiza automáticamente el precio en el localStorage si el usuario lo modifica manualmente
+  function actualizarPrecioEnCatalogo() {
+    const rubro = document.getElementById("categoria").value;
+    const nombreProducto = document.getElementById("producto").value;
+    const nuevoPrecio = parseFloat(document.getElementById("precioUSD").value);
+
+    if (!rubro || !nombreProducto || isNaN(nuevoPrecio) || nuevoPrecio <= 0) return;
+
+    let catalogo = obtenerCatalogo();
+    if (catalogo[rubro]) {
+      let productoObj = catalogo[rubro].find(p => p.nombre === nombreProducto);
+      if (productoObj) {
+        productoObj.precio = nuevoPrecio;
+        guardarCatalogo(catalogo);
+        
+        // Actualizar también el data-precio de la opción en el select
+        const comboProducto = document.getElementById("producto");
+        for (let i = 0; i < comboProducto.options.length; i++) {
+          if (comboProducto.options[i].value === nombreProducto) {
+            comboProducto.options[i].setAttribute("data-precio", nuevoPrecio);
+            break;
+          }
+        }
+      }
+    }
+  }
+
   function mostrarCrearRubro() {
     const box = document.getElementById("boxNuevoRubro");
     box.classList.toggle("oculto");
@@ -552,12 +577,13 @@
     actualizarTabla();
   }
 
+  // MODIFICADO: Agrupa o acumula la cuenta si el cliente ya existe
   function guardarCreditoTotal() {
-    const cliente = document.getElementById("nombreCliente").value;
-    const telefono = document.getElementById("cedulaCliente").value;
+    const clienteInput = document.getElementById("nombreCliente").value.trim();
+    const telefono = document.getElementById("cedulaCliente").value.trim();
     const tasa = parseFloat(document.getElementById("tasaDolar").value) || 0;
 
-    if (!cliente) {
+    if (!clienteInput) {
       alert("Por favor ingresa el nombre del cliente.");
       return;
     }
@@ -567,24 +593,50 @@
       return;
     }
 
-    let totalUSD = productosAgregados.reduce((sum, item) => sum + item.subtotal, 0);
-    let totalBS = totalUSD * tasa;
-
-    let registroCredito = {
-      fecha: new Date().toLocaleString(),
-      cliente: cliente,
-      telefono: telefono,
-      tasaDolar: tasa,
-      productos: [...productosAgregados],
-      totalUSD: totalUSD,
-      totalBS: totalBS
-    };
-
     let historial = JSON.parse(localStorage.getItem("historial_creditos")) || [];
-    historial.push(registroCredito);
-    localStorage.setItem("historial_creditos", JSON.stringify(historial));
 
-    alert(`✅ ¡Crédito guardado con éxito para ${cliente}!\nTotal: $${totalUSD.toFixed(2)} (Bs ${totalBS.toFixed(2)})`);
+    // Buscar si ya existe un crédito registrado con el mismo nombre de cliente (ignorando mayúsculas/minúsculas)
+    let clienteExistente = historial.find(item => item.cliente.toLowerCase() === clienteInput.toLowerCase());
+
+    if (clienteExistente) {
+      // Si ya existe, combinamos los nuevos productos con los que ya tenía
+      productosAgregados.forEach(nuevoProd => {
+        let prodExistente = clienteExistente.productos.find(p => p.producto === nuevoProd.producto);
+        if (prodExistente) {
+          prodExistente.cantidad += nuevoProd.cantidad;
+          prodExistente.subtotal += nuevoProd.subtotal;
+        } else {
+          clienteExistente.productos.push({ ...nuevoProd });
+        }
+      });
+
+      // Recalcular los totales generales del cliente
+      clienteExistente.totalUSD = clienteExistente.productos.reduce((sum, p) => sum + p.subtotal, 0);
+      clienteExistente.totalBS = clienteExistente.totalUSD * tasa;
+      clienteExistente.fecha = new Date().toLocaleString(); // Actualizar fecha de última compra
+      if (telefono) clienteExistente.telefono = telefono; // Actualizar teléfono si se ingresó uno nuevo
+
+      alert(`✅ ¡Crédito actualizado para ${clienteExistente.cliente}!\nNuevo Total: $${clienteExistente.totalUSD.toFixed(2)} (Bs ${clienteExistente.totalBS.toFixed(2)})`);
+    } else {
+      // Si es un cliente nuevo, se crea el registro completo
+      let totalUSD = productosAgregados.reduce((sum, item) => sum + item.subtotal, 0);
+      let totalBS = totalUSD * tasa;
+
+      let registroCredito = {
+        fecha: new Date().toLocaleString(),
+        cliente: clienteInput,
+        telefono: telefono,
+        tasaDolar: tasa,
+        productos: [...productosAgregados],
+        totalUSD: totalUSD,
+        totalBS: totalBS
+      };
+
+      historial.push(registroCredito);
+      alert(`✅ ¡Crédito guardado con éxito para ${clienteInput}!\nTotal: $${totalUSD.toFixed(2)} (Bs ${totalBS.toFixed(2)})`);
+    }
+
+    localStorage.setItem("historial_creditos", JSON.stringify(historial));
     
     document.getElementById("nombreCliente").value = "";
     document.getElementById("cedulaCliente").value = "";
@@ -641,7 +693,7 @@
       itemDiv.className = "credito-item";
       itemDiv.innerHTML = `
         <strong>👤 Cliente: ${credito.cliente}</strong> (${credito.telefono || 'Sin teléfono'})<br>
-        <small>📅 Fecha: ${credito.fecha} | Tasa: Bs ${credito.tasaDolar}</small>
+        <small>📅 Última actualización: ${credito.fecha} | Tasa: Bs ${credito.tasaDolar}</small>
         <ul>${listaProdHtml}</ul>
         <div style="font-weight:bold; color:#d9534f; text-align:right;">
           Total: $${credito.totalUSD.toFixed(2)} | Bs ${credito.totalBS.toFixed(2)}
